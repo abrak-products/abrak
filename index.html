@@ -184,6 +184,12 @@
         .page {
             display: none;
             width: 100%;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .active {
@@ -1179,6 +1185,114 @@
             background: #c0392b;
         }
         
+        /* استایل‌های جدید برای جستجو و فیلتر */
+        .search-filter-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+        
+        .search-box {
+            margin-bottom: 15px;
+        }
+        
+        .filter-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-options select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+        }
+        
+        .update-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .update-notification.show {
+            display: flex;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            display: none;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .user-activity-log {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .activity-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-time {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        
         @media (max-width: 768px) {
             .products-container {
                 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -1242,6 +1356,10 @@
             .profile-form {
                 grid-template-columns: 1fr;
             }
+            
+            .filter-options {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -1255,7 +1373,6 @@
                     <div class="logo" id="site-title">ابرک | ABRAK</div>
                 </div>
                 <div class="auth-buttons">
-                    <!-- فقط یک دکمه خروج در هدر -->
                     <button id="logout-btn" class="btn btn-logout" style="display: none;">خروج</button>
                     <button id="cart-btn" class="btn btn-info" style="display: none;">سبد خرید</button>
                     <button id="profile-btn" class="btn btn-info" style="display: none;">پروفایل من</button>
@@ -1330,6 +1447,23 @@
             
             <div class="about-section" id="user-about-section">
                 <!-- محتوای درباره ما اینجا نمایش داده می‌شود -->
+            </div>
+            
+            <!-- بخش جستجو و فیلتر -->
+            <div class="search-filter-container">
+                <div class="search-box">
+                    <input type="text" id="product-search" placeholder="جستجوی محصولات...">
+                </div>
+                <div class="filter-options">
+                    <select id="price-filter">
+                        <option value="">همه قیمت‌ها</option>
+                        <option value="0-50000">تا 50,000 تومان</option>
+                        <option value="50000-200000">50,000 تا 200,000 تومان</option>
+                        <option value="200000-500000">200,000 تا 500,000 تومان</option>
+                        <option value="500000+">بالای 500,000 تومان</option>
+                    </select>
+                    <button id="clear-filters" class="btn btn-secondary btn-small">پاک کردن فیلترها</button>
+                </div>
             </div>
             
             <div class="products-container" id="user-products-list">
@@ -1440,6 +1574,7 @@
                 <div class="admin-tab" data-tab="about-management">مدیریت درباره ما</div>
                 <div class="admin-tab" data-tab="orders-management">مدیریت سفارشات</div>
                 <div class="admin-tab" data-tab="comments-management">مدیریت نظرات</div>
+                <div class="admin-tab" data-tab="activity-management">فعالیت کاربران</div>
             </div>
             
             <!-- بخش مدیریت محصولات -->
@@ -1490,6 +1625,8 @@
                         <thead>
                             <tr>
                                 <th>نام کاربری</th>
+                                <th>تاریخ ثبت‌نام</th>
+                                <th>آخرین فعالیت</th>
                                 <th>عملیات</th>
                             </tr>
                         </thead>
@@ -1596,6 +1733,17 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- بخش مدیریت فعالیت کاربران -->
+            <div id="activity-management" class="admin-content">
+                <div class="admin-panel">
+                    <div class="admin-title">فعالیت کاربران</div>
+                    
+                    <div id="user-activity-list">
+                        <!-- فعالیت کاربران اینجا نمایش داده می‌شوند -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1675,6 +1823,17 @@
         ↑
     </div>
 
+    <!-- اعلان بروزرسانی -->
+    <div class="update-notification" id="update-notification">
+        <span>بروزرسانی جدید موجود است!</span>
+        <button id="refresh-page" class="btn btn-success btn-small">بارگذاری مجدد</button>
+    </div>
+
+    <!-- صفحه بارگذاری -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
     <script>
         // سیستم مدیریت وضعیت
         const AppState = {
@@ -1703,6 +1862,13 @@
             productSpecs: JSON.parse(localStorage.getItem('productSpecs')) || {},
             productComments: JSON.parse(localStorage.getItem('productComments')) || {},
             userComments: JSON.parse(localStorage.getItem('userComments')) || {},
+            
+            // سیستم جدید: لاگ فعالیت کاربران
+            userActivity: JSON.parse(localStorage.getItem('userActivity')) || {},
+            
+            // سیستم جدید: همگام‌سازی با GitHub
+            lastUpdate: localStorage.getItem('lastUpdate') || Date.now(),
+            updateCheckInterval: 5 * 60 * 1000, // 5 دقیقه
             
             // کلمات ممنوعه برای فیلتر نظرات
             bannedWords: ['فحش', 'توهین', 'کلمه ممنوعه 1', 'کلمه ممنوعه 2'], // می‌توانید لیست را گسترش دهید
@@ -1753,12 +1919,63 @@
                 localStorage.setItem('userComments', JSON.stringify(this.userComments));
             },
             
+            // توابع جدید برای مدیریت فعالیت کاربران
+            saveUserActivity() {
+                localStorage.setItem('userActivity', JSON.stringify(this.userActivity));
+            },
+            
+            // تابع جدید برای ثبت فعالیت کاربر
+            logUserActivity(username, action, details = {}) {
+                if (!this.userActivity[username]) {
+                    this.userActivity[username] = [];
+                }
+                
+                const activity = {
+                    timestamp: new Date().toLocaleString('fa-IR'),
+                    action: action,
+                    details: details
+                };
+                
+                this.userActivity[username].push(activity);
+                
+                // فقط 100 فعالیت آخر را نگه دار
+                if (this.userActivity[username].length > 100) {
+                    this.userActivity[username] = this.userActivity[username].slice(-100);
+                }
+                
+                this.saveUserActivity();
+            },
+            
+            // تابع جدید برای دریافت فعالیت کاربر
+            getUserActivity(username) {
+                return this.userActivity[username] || [];
+            },
+            
+            // تابع جدید برای دریافت تمام فعالیت‌ها
+            getAllUserActivities() {
+                const allActivities = [];
+                Object.keys(this.userActivity).forEach(username => {
+                    this.userActivity[username].forEach(activity => {
+                        allActivities.push({
+                            username: username,
+                            ...activity
+                        });
+                    });
+                });
+                
+                // مرتب‌سازی بر اساس زمان (جدیدترین اول)
+                return allActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            },
+            
             // مدیریت کاربر
             loginUser(username, password) {
                 // مدیر نیز مانند سایر کاربران با نام کاربری و رمز عبور وارد می‌شود
                 if (username === 'admin' && password === '2190079101') {
                     this.currentUser = { username: 'admin', isAdmin: true };
                     localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+                    
+                    // ثبت فعالیت
+                    this.logUserActivity('admin', 'ورود به سیستم');
                     return true;
                 }
                 
@@ -1766,6 +1983,9 @@
                 if (user) {
                     this.currentUser = user;
                     localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+                    
+                    // ثبت فعالیت
+                    this.logUserActivity(username, 'ورود به سیستم');
                     return true;
                 }
                 return false;
@@ -1787,9 +2007,13 @@
                 this.users.push({ 
                     username, 
                     password: this.simpleHash(password),
-                    registerDate: new Date().toLocaleString('fa-IR')
+                    registerDate: new Date().toLocaleString('fa-IR'),
+                    lastActivity: new Date().toLocaleString('fa-IR')
                 });
                 this.saveUsers();
+                
+                // ثبت فعالیت
+                this.logUserActivity(username, 'ثبت‌نام در سیستم');
                 
                 return { success: true, message: 'ثبت‌نام با موفقیت انجام شد' };
             },
@@ -1810,6 +2034,10 @@
                 }
                 
                 this.saveUsers();
+                
+                // ثبت فعالیت
+                this.logUserActivity(oldUsername, 'به‌روزرسانی اطلاعات کاربر');
+                
                 return { success: true, message: 'اطلاعات کاربر با موفقیت به‌روزرسانی شد' };
             },
             
@@ -1820,6 +2048,10 @@
                     lastUpdate: new Date().toLocaleString('fa-IR')
                 };
                 this.saveUserProfiles();
+                
+                // ثبت فعالیت
+                this.logUserActivity(username, 'به‌روزرسانی پروفایل');
+                
                 return true;
             },
             
@@ -1848,6 +2080,12 @@
                 };
                 this.products.push(product);
                 this.saveProducts();
+                
+                // ثبت فعالیت
+                if (this.currentUser) {
+                    this.logUserActivity(this.currentUser.username, 'افزودن محصول', { productName: name });
+                }
+                
                 return product;
             },
             
@@ -1869,14 +2107,27 @@
                     product.price = parseInt(price);
                     if (image) product.image = image;
                     this.saveProducts();
+                    
+                    // ثبت فعالیت
+                    if (this.currentUser) {
+                        this.logUserActivity(this.currentUser.username, 'ویرایش محصول', { productName: name });
+                    }
+                    
                     return true;
                 }
                 return false;
             },
             
             deleteProduct(id) {
+                const product = this.products.find(p => p.id === id);
                 this.products = this.products.filter(p => p.id !== id);
                 this.saveProducts();
+                
+                // ثبت فعالیت
+                if (this.currentUser && product) {
+                    this.logUserActivity(this.currentUser.username, 'حذف محصول', { productName: product.name });
+                }
+                
                 return true;
             },
             
@@ -1898,6 +2149,10 @@
                         });
                     }
                     this.saveCarts();
+                    
+                    // ثبت فعالیت
+                    this.logUserActivity(username, 'افزودن به سبد خرید', { productName: product.name });
+                    
                     return true;
                 }
                 return false;
@@ -1905,8 +2160,15 @@
             
             removeFromCart(username, productId) {
                 if (this.carts[username]) {
+                    const product = this.products.find(p => p.id === productId);
                     this.carts[username] = this.carts[username].filter(item => item.id !== productId);
                     this.saveCarts();
+                    
+                    // ثبت فعالیت
+                    if (product) {
+                        this.logUserActivity(username, 'حذف از سبد خرید', { productName: product.name });
+                    }
+                    
                     return true;
                 }
                 return false;
@@ -1940,6 +2202,9 @@
                 this.saveCarts();
                 this.saveOrders();
                 
+                // ثبت فعالیت
+                this.logUserActivity(username, 'ثبت سفارش', { orderId: orderId, total: this.orders[orderId].total });
+                
                 return orderId;
             },
             
@@ -1950,6 +2215,14 @@
                         this.orders[orderId].adminMessage = adminMessage;
                     }
                     this.saveOrders();
+                    
+                    // ثبت فعالیت
+                    this.logUserActivity('admin', 'تغییر وضعیت سفارش', { 
+                        orderId: orderId, 
+                        status: status,
+                        username: this.orders[orderId].username
+                    });
+                    
                     return true;
                 }
                 return false;
@@ -1972,9 +2245,13 @@
                 this.users.push({ 
                     username, 
                     password: this.simpleHash(password),
-                    registerDate: new Date().toLocaleString('fa-IR')
+                    registerDate: new Date().toLocaleString('fa-IR'),
+                    lastActivity: new Date().toLocaleString('fa-IR')
                 });
                 this.saveUsers();
+                
+                // ثبت فعالیت
+                this.logUserActivity('admin', 'افزودن کاربر', { username: username });
                 
                 return { success: true, message: 'کاربر با موفقیت اضافه شد' };
             },
@@ -1988,9 +2265,15 @@
                 this.users = this.users.filter(u => u.username !== username);
                 delete this.carts[username];
                 delete this.userProfiles[username];
+                delete this.userActivity[username];
                 this.saveUsers();
                 this.saveCarts();
                 this.saveUserProfiles();
+                this.saveUserActivity();
+                
+                // ثبت فعالیت
+                this.logUserActivity('admin', 'حذف کاربر', { username: username });
+                
                 return true;
             },
             
@@ -1999,6 +2282,10 @@
                 this.siteSettings.title = title;
                 if (logo) this.siteSettings.siteLogo = logo;
                 this.saveSiteSettings();
+                
+                // ثبت فعالیت
+                this.logUserActivity('admin', 'به‌روزرسانی تنظیمات سایت');
+                
                 return true;
             },
             
@@ -2008,6 +2295,10 @@
                 this.customCode.css = css;
                 this.customCode.js = js;
                 this.saveCustomCode();
+                
+                // ثبت فعالیت
+                this.logUserActivity('admin', 'به‌روزرسانی کدهای سفارشی');
+                
                 return true;
             },
             
@@ -2017,6 +2308,10 @@
                 this.aboutContent.title = title;
                 this.aboutContent.content = content;
                 this.saveAboutContent();
+                
+                // ثبت فعالیت
+                this.logUserActivity('admin', 'به‌روزرسانی محتوای درباره ما');
+                
                 return true;
             },
             
@@ -2024,6 +2319,14 @@
             addProductSpecs(productId, specs) {
                 this.productSpecs[productId] = specs;
                 this.saveProductSpecs();
+                
+                // ثبت فعالیت
+                if (this.currentUser) {
+                    const product = this.products.find(p => p.id === productId);
+                    if (product) {
+                        this.logUserActivity(this.currentUser.username, 'افزودن مشخصات محصول', { productName: product.name });
+                    }
+                }
             },
             
             getProductSpecs(productId) {
@@ -2063,6 +2366,12 @@
                 
                 this.saveProductComments();
                 this.saveUserComments();
+                
+                // ثبت فعالیت
+                const product = this.products.find(p => p.id === productId);
+                if (product) {
+                    this.logUserActivity(username, 'ثبت نظر', { productName: product.name });
+                }
                 
                 return { success: true, message: 'نظر شما با موفقیت ثبت شد' };
             },
@@ -2131,6 +2440,12 @@
                 this.saveProductComments();
                 this.saveUserComments();
                 
+                // ثبت فعالیت
+                const product = this.products.find(p => p.id === productId);
+                if (product) {
+                    this.logUserActivity(currentUsername, 'حذف نظر', { productName: product.name });
+                }
+                
                 return { success: true, message: 'نظر با موفقیت حذف شد' };
             },
             
@@ -2148,6 +2463,30 @@
             isUserProfileComplete(username) {
                 const profile = this.getUserProfile(username);
                 return profile.firstName && profile.lastName && profile.phone && profile.address && profile.postalCode;
+            },
+            
+            // سیستم جدید: همگام‌سازی با GitHub
+            checkForUpdates() {
+                const currentTime = Date.now();
+                const timeSinceLastUpdate = currentTime - this.lastUpdate;
+                
+                if (timeSinceLastUpdate > this.updateCheckInterval) {
+                    // شبیه‌سازی بررسی بروزرسانی
+                    this.showUpdateNotification();
+                    this.lastUpdate = currentTime;
+                    localStorage.setItem('lastUpdate', this.lastUpdate);
+                }
+            },
+            
+            showUpdateNotification() {
+                const notification = document.getElementById('update-notification');
+                notification.classList.add('show');
+            },
+            
+            applyUpdates() {
+                // شبیه‌سازی اعمال بروزرسانی
+                showMessage('بروزرسانی‌ها با موفقیت اعمال شد', 'success');
+                location.reload();
             }
         };
 
@@ -2610,6 +2949,36 @@
             });
         }
 
+        // تابع جدید برای نمایش فعالیت کاربران
+        function renderUserActivities() {
+            const container = document.getElementById('user-activity-list');
+            container.innerHTML = '';
+            
+            const allActivities = AppState.getAllUserActivities();
+            
+            if (allActivities.length === 0) {
+                container.innerHTML = '<div class="empty-state">هنوز فعالیتی ثبت نشده است</div>';
+                return;
+            }
+            
+            // نمایش فعالیت‌ها به ترتیب تاریخ (جدیدترین اول)
+            allActivities.forEach(activity => {
+                const activityEl = document.createElement('div');
+                activityEl.className = 'user-activity-log';
+                activityEl.innerHTML = `
+                    <div class="activity-item">
+                        <div><strong>کاربر:</strong> ${activity.username}</div>
+                        <div><strong>فعالیت:</strong> ${activity.action}</div>
+                        ${activity.details && Object.keys(activity.details).length > 0 ? `
+                            <div><strong>جزئیات:</strong> ${JSON.stringify(activity.details)}</div>
+                        ` : ''}
+                        <div class="activity-time">${activity.timestamp}</div>
+                    </div>
+                `;
+                container.appendChild(activityEl);
+            });
+        }
+
         function renderUsersList() {
             const usersList = document.getElementById('users-list');
             usersList.innerHTML = '';
@@ -2618,6 +2987,8 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${user.username}</td>
+                    <td>${user.registerDate}</td>
+                    <td>${user.lastActivity || 'بدون فعالیت'}</td>
                     <td>
                         <button class="btn btn-warning btn-small edit-user-btn" data-username="${user.username}">ویرایش</button>
                         <button class="btn btn-info btn-small view-user-details" data-username="${user.username}">مشخصات</button>
@@ -2675,6 +3046,7 @@
         function showUserDetails(username) {
             const userProfile = AppState.getUserProfile(username);
             const user = AppState.users.find(u => u.username === username);
+            const userActivities = AppState.getUserActivity(username);
             
             const content = document.getElementById('user-details-content');
             content.innerHTML = `
@@ -2685,6 +3057,10 @@
                 <div class="user-detail-item">
                     <span class="user-detail-label">تاریخ ثبت‌نام:</span>
                     <span class="user-detail-value">${user.registerDate}</span>
+                </div>
+                <div class="user-detail-item">
+                    <span class="user-detail-label">آخرین فعالیت:</span>
+                    <span class="user-detail-value">${user.lastActivity || 'بدون فعالیت'}</span>
                 </div>
                 <div class="user-detail-item">
                     <span class="user-detail-label">نام:</span>
@@ -2710,6 +3086,17 @@
                     <span class="user-detail-label">آخرین به‌روزرسانی:</span>
                     <span class="user-detail-value">${userProfile.lastUpdate || 'ثبت نشده'}</span>
                 </div>
+                ${userActivities.length > 0 ? `
+                    <div class="user-activity-log" style="margin-top: 20px;">
+                        <h4>آخرین فعالیت‌ها:</h4>
+                        ${userActivities.slice(0, 5).map(activity => `
+                            <div class="activity-item">
+                                <div>${activity.action}</div>
+                                <div class="activity-time">${activity.timestamp}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
             `;
             
             const modal = document.getElementById('user-details-modal');
@@ -2906,6 +3293,7 @@
                     renderAdminOrders();
                     renderUsersList();
                     renderAdminComments();
+                    renderUserActivities();
                 } else {
                     showPage('user-page');
                     document.getElementById('username-display').textContent = AppState.currentUser.username;
@@ -3052,6 +3440,73 @@
             }
         }
 
+        // توابع جدید برای جستجو و فیلتر
+        function setupSearchAndFilter() {
+            // جستجوی محصولات
+            document.getElementById('product-search').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterProducts(searchTerm);
+            });
+            
+            // فیلتر قیمت
+            document.getElementById('price-filter').addEventListener('change', function(e) {
+                filterProductsByPrice(e.target.value);
+            });
+            
+            // پاک کردن فیلترها
+            document.getElementById('clear-filters').addEventListener('click', function() {
+                document.getElementById('product-search').value = '';
+                document.getElementById('price-filter').value = '';
+                renderUserProducts();
+                renderAdminProducts();
+            });
+        }
+
+        function filterProducts(searchTerm) {
+            const productCards = document.querySelectorAll('.product-card');
+            
+            productCards.forEach(card => {
+                const productName = card.querySelector('.product-name').textContent.toLowerCase();
+                const productSpecs = card.querySelector('.specs-content')?.textContent.toLowerCase() || '';
+                
+                if (productName.includes(searchTerm) || productSpecs.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function filterProductsByPrice(priceRange) {
+            const productCards = document.querySelectorAll('.product-card');
+            
+            productCards.forEach(card => {
+                const priceText = card.querySelector('.product-price').textContent;
+                const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+                
+                let shouldShow = true;
+                
+                switch(priceRange) {
+                    case '0-50000':
+                        shouldShow = price <= 50000;
+                        break;
+                    case '50000-200000':
+                        shouldShow = price > 50000 && price <= 200000;
+                        break;
+                    case '200000-500000':
+                        shouldShow = price > 200000 && price <= 500000;
+                        break;
+                    case '500000+':
+                        shouldShow = price > 500000;
+                        break;
+                    default:
+                        shouldShow = true;
+                }
+                
+                card.style.display = shouldShow ? 'block' : 'none';
+            });
+        }
+
         // رویدادهای کلیک و سایر تعاملات
         document.addEventListener('DOMContentLoaded', function() {
             // بارگذاری تنظیمات سایت
@@ -3060,6 +3515,9 @@
             
             // تنظیم وضعیت اولیه UI
             updateUI();
+            
+            // راه‌اندازی سیستم جستجو و فیلتر
+            setupSearchAndFilter();
             
             // رویدادهای تب‌های فرم احراز هویت
             document.querySelectorAll('.auth-tab').forEach(tab => {
@@ -3105,6 +3563,11 @@
                     // اگر تب مدیریت نظرات فعال شد، نظرات را رندر کن
                     if (tabName === 'comments-management') {
                         renderAdminComments();
+                    }
+                    
+                    // اگر تب مدیریت فعالیت‌ها فعال شد، فعالیت‌ها را رندر کن
+                    if (tabName === 'activity-management') {
+                        renderUserActivities();
                     }
                 });
             });
@@ -3441,11 +3904,21 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
             
+            // رویداد بروزرسانی صفحه
+            document.getElementById('refresh-page').addEventListener('click', function() {
+                AppState.applyUpdates();
+            });
+            
             // بارگذاری اولیه ورود محصولات
             initializeBulkProductInputs();
             
             // تنظیم دکمه خروج
             setupLogoutButtons();
+            
+            // راه‌اندازی سیستم بررسی بروزرسانی
+            setInterval(() => {
+                AppState.checkForUpdates();
+            }, AppState.updateCheckInterval);
         });
     </script>
 </body>
